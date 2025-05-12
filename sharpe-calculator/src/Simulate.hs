@@ -1,7 +1,31 @@
-module Simulate (generateWeights, calculateReturns, calculateVolatility, calculateSharpe, simulateWallet) where
+module Simulate (simulateWallet, simulateAllWallets, saveResults, generateWeights) where
 
 import System.Random
+import Data.List (intercalate)
 import Control.Monad (replicateM)
+import Control.Parallel.Strategies (parMap, rdeepseq, using)
+import Data.List (maximumBy)
+import Data.Ord (comparing)
+import qualified Data.ByteString.Lazy as BL
+import qualified Data.Vector as V
+
+
+-- generating all weights for one iteration
+generateWeightSets :: Int -> Int -> IO [[Double]]
+generateWeightSets walletSize nSets = replicateM nSets (generateWeights walletSize)
+
+-- best results for one wallet
+optimizeWallet :: [Double] -> Int -> IO (Double, [Double])
+optimizeWallet values nSets = do
+    weightSets <- generateWeightSets (length values) nSets
+    let sharpeResults = parMap rdeepseq (\ws -> (simulateWallet values ws, ws)) weightSets
+        (bestSharpe, bestWeights) = maximumBy (comparing fst) sharpeResults
+    return (bestSharpe, bestWeights)
+
+simulateAllWallets :: [[Double]] -> Int -> IO [(Double, [Double])]
+simulateAllWallets wallets nSets = do
+    results <- mapM (\wallet -> optimizeWallet wallet nSets) wallets
+    return results
 
 generateWeights :: Int -> IO [Double]
 generateWeights n = do

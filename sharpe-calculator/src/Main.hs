@@ -5,7 +5,7 @@ import Simulate
 import Types 
 import System.Directory (createDirectoryIfMissing)
 import System.IO
-
+import Control.Monad (replicateM)
 import System.Directory (doesFileExist)
 
 
@@ -16,14 +16,17 @@ main = do
   -- wallet <- loadWallet  "data/prices.csv" (combinations !! 0)
   
   wallets <- loadAllWallets "data/stock_combinations.txt" "data/prices.csv"
-  weights <- generateWeights 25
   let total = length wallets
+  
+  weightsList <- replicateM total (generateWeights 25)
+  
+  let sharpeResults = zipWith simulateWallet wallets weightsList
+  
+  -- mapM_ print walletSharpePairs
+  
 
-
-  let wallet = wallets !! 0 
-
-  let sharpeRatio = simulateWallet wallet weights
-  print sharpeRatio
+  let numberedResults = zip [1..] walletSharpePairs
+  mapM_ (\(i, sharpe) -> putStrLn $ "Wallet " ++ show i ++ ": " ++ show sharpe) numberedResults
 
 
 

@@ -17,13 +17,13 @@ extra-source-files:  README.md
 library
   hs-source-dirs:      src
   exposed-modules:     Loader, Types, Simulate
-  build-depends:       base, directory, random
+  build-depends:       base, directory, random, parallel, cassava, vector, bytestring
 
 executable sharpe-calculator
   hs-source-dirs:      src
   main-is:             Main.hs
   default-language:    Haskell2010
-  build-depends:       base >= 4.7 && < 5, directory, random
+  build-depends:       base >= 4.7 && < 5, directory, random, parallel, cassava >= 0.5.3.0, vector, bytestring
   ghc-options:         -Wall
                        -Wcompat
                        -Widentities

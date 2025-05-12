@@ -1,6 +1,6 @@
-module Loader (loadAllWallets, loadWallet, loadCombinations) where
+module Loader (loadAllWallets, loadWallet, loadCombinations, saveBestSharpe) where
 
-import Data.List (elemIndex)
+import Data.List (elemIndex, intercalate)
 import Data.Maybe (mapMaybe)
 
 
@@ -15,7 +15,6 @@ loadCombinations file = do
         f c l@(x:xs) | c == delim = []:l
                      | otherwise  = (c:x):xs
     strip = reverse . dropWhile (== ' ') . reverse . dropWhile (== ' ')
-
 
 loadWallet :: FilePath -> [String] -> IO [Double]
 loadWallet file selectedStocks = do
@@ -65,5 +64,10 @@ splitOn delim = foldr f [[]]
     f c l@(x:xs) | c == delim = []:l
                  | otherwise  = (c:x):xs
 
-
-
+saveBestSharpe :: FilePath -> Int -> [Double] -> Double -> IO ()
+saveBestSharpe path comboIndex weights sharpe = do
+  let comboIndexStr = "Combo Index: " ++ show comboIndex
+      weightsStr = "Weights: " ++ show weights
+      sharpeStr = "Sharpe Ratio: " ++ show sharpe
+      content = unlines [comboIndexStr, weightsStr, sharpeStr, ""]
+  appendFile path content

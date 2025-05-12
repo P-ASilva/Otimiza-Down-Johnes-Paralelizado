@@ -6,17 +6,23 @@ import Types
 import System.Directory (createDirectoryIfMissing)
 import System.IO
 
+import System.Directory (doesFileExist)
+
 
 main :: IO ()
 main = do
-  wallets <- loadCombinations "data/stock_combinations.txt"
-
-  let total = length wallets
+  -- combinations <- loadCombinations "data/stock_combinations.txt"
+  -- let total = length combinations
+  -- wallet <- loadWallet  "data/prices.csv" (combinations !! 0)
+  
+  wallets <- loadAllWallets "data/stock_combinations.txt" "data/prices.csv"
   weights <- generateWeights 25
-  -- test fo 1 wallet
-  let wallet = wallets !! 0
-  walletValues <- loadWallet "data/dow_jones_2024_S2_closing_prices.csv" wallet
-  let sharpeRatio = simulateWallet walletValues weights
+  let total = length wallets
+
+
+  let wallet = wallets !! 0 
+
+  let sharpeRatio = simulateWallet wallet weights
   print sharpeRatio
 
 

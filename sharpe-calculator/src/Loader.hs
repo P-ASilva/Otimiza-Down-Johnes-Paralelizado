@@ -1,4 +1,4 @@
-module Loader (loadCombinations, loadWallet) where
+module Loader (loadAllWallets, loadWallet, loadCombinations) where
 
 import Data.List (elemIndex)
 import Data.Maybe (mapMaybe)
@@ -16,14 +16,28 @@ loadCombinations file = do
                      | otherwise  = (c:x):xs
     strip = reverse . dropWhile (== ' ') . reverse . dropWhile (== ' ')
 
+
 loadWallet :: FilePath -> [String] -> IO [Double]
 loadWallet file selectedStocks = do
   contents <- readFile file
   let (headerLine:rows) = lines contents
       header = splitOnComma headerLine
-      -- Get indexes of stocks you want (excluding date column at index 0)
       indexes = mapMaybe (`elemIndex` header) selectedStocks
-      -- Process all rows, skip the date column (head)
+      values = concatMap (extractValues indexes) rows
+  return values
+
+loadAllWallets :: FilePath -> FilePath -> IO [[Double]]
+loadAllWallets combinationsPath stocksPath = do
+  wallets <- loadCombinations combinationsPath 
+  stocksContent <- readFile stocksPath 
+  let loadFromContent = loadWalletFromContent stocksContent
+  mapM loadFromContent wallets
+
+loadWalletFromContent :: String -> [String] -> IO [Double]
+loadWalletFromContent contents selectedStocks = do
+  let (headerLine:rows) = lines contents
+      header = splitOnComma headerLine
+      indexes = mapMaybe (`elemIndex` header) selectedStocks
       values = concatMap (extractValues indexes) rows
   return values
 

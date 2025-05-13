@@ -1,4 +1,4 @@
-module Simulate (simulateWallet, simulateAllWallets, generateWeights, computeBestSharpeAndWeights) where
+module Simulate (generateWeights, computeBestSharpeAndWeights) where
 
 import System.Random
 import Data.List (intercalate)
@@ -9,26 +9,15 @@ import Data.Ord (comparing)
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Vector as V
 
-
-
--- best results for one wallet
-optimizeWallet :: [Double] -> Int -> IO (Double, [Double])
-optimizeWallet values nSets = do
-    weightSets <- generateWeightSets (length values) nSets
-    let sharpeResults = parMap rdeepseq (\ws -> (simulateWallet values ws, ws)) weightSets
-        (bestSharpe, bestWeights) = maximumBy (comparing fst) sharpeResults
-    return (bestSharpe, bestWeights)
-
 computeBestSharpeAndWeights :: [Double] -> IO (Double, [Double])
 computeBestSharpeAndWeights wallet = do
+  let returns = calculatePctChange wallet
   weightsList <- replicateM 1000 (generateWeights 25)
-  let results = parMap rdeepseq (\w -> (simulateWallet wallet w, w)) weightsList
+  let results = parMap rdeepseq (\w -> (simulateWalletWithPctChange returns w, w)) weightsList
   return $ maximumBy (comparing fst) results
 
-simulateAllWallets :: [[Double]] -> Int -> IO [(Double, [Double])]
-simulateAllWallets wallets nSets = do
-    results <- mapM (\wallet -> optimizeWallet wallet nSets) wallets
-    return results
+generateWeightSets :: Int -> Int -> IO [[Double]]
+generateWeightSets walletSize nSets = replicateM nSets (generateWeights walletSize)
 
 generateWeights :: Int -> IO [Double]
 generateWeights n = do
@@ -36,8 +25,18 @@ generateWeights n = do
   let total = sum ws
   return $ map (/ total) ws 
 
-generateWeightSets :: Int -> Int -> IO [[Double]]
-generateWeightSets walletSize nSets = replicateM nSets (generateWeights walletSize)
+simulateWalletWithPctChange :: [Double] -> [Double] -> Double -- compose to calculateSharpe
+simulateWalletWithPctChange returns weights =
+  let ret = calculateReturns returns weights
+      vol = calculateVolatility returns
+  in calculateSharpe ret vol
+
+simulateWallet :: [Double] -> [Double] -> Double -- compose to calculateSharpe
+simulateWallet values weights =
+  let returns = calculatePctChange values
+      ret = calculateReturns returns weights
+      vol = calculateVolatility returns
+  in calculateSharpe ret vol
 
 calculatePctChange :: [Double] -> [Double] -- n/n-1 - 1
 calculatePctChange prices = zipWith (\x y -> (x - y) / y) (tail prices) prices
@@ -59,9 +58,3 @@ calculateSharpe :: Double -> Double -> Double -- annual_return / volatility if v
 calculateSharpe _ 0 = 0
 calculateSharpe annualReturn volatility = annualReturn / volatility
 
-simulateWallet :: [Double] -> [Double] -> Double -- compose to calculateSharpe
-simulateWallet values weights =
-  let returns = calculatePctChange values
-      ret = calculateReturns returns weights
-      vol = calculateVolatility returns
-  in calculateSharpe ret vol

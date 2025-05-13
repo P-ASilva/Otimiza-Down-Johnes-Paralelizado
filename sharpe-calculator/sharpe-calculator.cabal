@@ -14,9 +14,10 @@ category:            Web
 build-type:          Simple
 extra-source-files:  README.md
                      CHANGELOG.md
+                     
 library
   hs-source-dirs:      src
-  exposed-modules:     Loader, Types, Simulate
+  exposed-modules:     Loader, Simulate
   build-depends:       base, directory, random, parallel, cassava, vector, bytestring
 
 executable sharpe-calculator
@@ -33,4 +34,7 @@ executable sharpe-calculator
                        -Wmissing-home-modules
                        -Wpartial-fields
                        -Wredundant-constraints
-  other-modules:       Loader, Types, Simulate
+                       -threaded 
+                       -rtsopts
+                       -with-rtsopts=-N
+  other-modules:       Loader, Simulate

@@ -9,9 +9,7 @@ main = do
 
   mapM_ (\(i, wallet) -> do
             (sharpe, weights) <- computeBestSharpeAndWeights wallet
-            putStrLn $ "Wallet " ++ show i ++ ": Best Sharpe = " ++ show sharpe
-            saveBestSharpe "results/sharpeRatios.txt" i weights sharpe
+            -- putStrLn $ "Wallet " ++ show i ++ ": Best Sharpe = " ++ show sharpe
+            saveBestSharpe "results/sharpeRatios.csv" i weights sharpe
         )
         (zip [1..] wallets)
-
-
